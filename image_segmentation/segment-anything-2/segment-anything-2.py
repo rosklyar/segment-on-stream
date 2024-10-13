@@ -14,7 +14,6 @@ sys.path.append('../../util')
 import webcamera_utils
 from arg_utils import get_base_parser, update_parser, get_savepath  # noqa
 from model_utils import check_and_download_models  # noqa
-from webcamera_utils import get_capture, get_writer  # noqa
 
 logger = getLogger(__name__)
 

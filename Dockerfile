@@ -2,7 +2,8 @@ FROM nvidia/cuda:12.4.0-base-ubuntu22.04
 
 # Set up environment variables
 ENV DEBIAN_FRONTEND=noninteractive
-ENV PATH="${PATH}:/home/user/.local/bin"
+ENV POETRY_VIRTUALENVS_CREATE=false
+ENV POETRY_NO_INTERACTION=1
 
 # We love UTF!
 ENV LANG C.UTF-8
@@ -23,32 +24,20 @@ RUN set -x \
 	&& apt-get install -y git vim tmux nano htop sudo curl wget gnupg2 \
 	&& apt-get install -y bash-completion \
 	&& apt-get install -y guvcview \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& useradd -ms /bin/bash user \
-	&& echo "user:user" | chpasswd && adduser user sudo \
-	&& echo "user ALL=(ALL) NOPASSWD: ALL " >> /etc/sudoers
+	&& rm -rf /var/lib/apt/lists/*
 
 RUN set -x \
-    && apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
+    && apt-get update && apt-get install ffmpeg libsm6 libxext6 -y
 
-RUN set -x \
-    && apt-get update \
-    && apt-get install -y software-properties-common \
-    && add-apt-repository ppa:deadsnakes/ppa \
-    && apt-get update \
-    && apt-get install -y python3.11 python3.11-venv python3.11-dev \
-    && apt-get install -y python3.11-tk
+WORKDIR /app
 
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
+COPY ./image_segmentation /app/image_segmentation
+COPY ./util /app/util
+COPY pyproject.toml poetry.lock /app/
 
-RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
+RUN curl -sSL https://install.python-poetry.org | python3 -
+ENV PATH="/root/.local/bin:$PATH"
 
-WORKDIR /home/user
-
-RUN git clone https://github.com/facebookresearch/segment-anything-2 && \
-    cd segment-anything-2 && \
-    python3 -m pip install -e . -v && \
-    python3 -m pip install -e ".[demo]" && \
-    cd checkpoints && ./download_ckpts.sh && cd ..
+RUN poetry install --no-root
 
 
